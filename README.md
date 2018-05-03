@@ -6,7 +6,7 @@ The **virtualbmc** (**vbmc**) command must be installed for this command to func
 (In openSUSE, this package can be found in the **Cloud:OpenStack:Master** repository)
 
 
-## Usage: 
+## Usage
 ```
 vbmcctl create|delete|reset|list [config_file]
 ```
