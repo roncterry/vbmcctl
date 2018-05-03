@@ -1,0 +1,494 @@
+#!/bin/bash
+#
+# version: 1.0.0
+# date: 2018-05-03
+
+### Colors ###
+RED='\e[0;31m'
+LTRED='\e[1;31m'
+BLUE='\e[0;34m'
+LTBLUE='\e[1;34m'
+GREEN='\e[0;32m'
+LTGREEN='\e[1;32m'
+ORANGE='\e[0;33m'
+YELLOW='\e[1;33m'
+CYAN='\e[0;36m'
+LTCYAN='\e[1;36m'
+PURPLE='\e[0;35m'
+LTPURPLE='\e[1;35m'
+GRAY='\e[1;30m'
+LTGRAY='\e[0;37m'
+WHITE='\e[1;37m'
+NC='\e[0m'
+##############
+
+DEFAULT_CONFIG_FILE="/etc/vbmcctl.cfg"
+
+DEFAULT_BMC_ADDR=127.0.0.1
+DEFAULT_BMC_PORT=623
+DEFAULT_BMC_USERNAME=admin
+DEFAULT_BMC_PASSWORD=password
+
+if [ -z ${2} ]
+then
+  CONFIG_FILE="${DEFAULT_CONFIG_FILE}"
+elif [ -e ${2} ]
+then
+  CONFIG_FILE="${2}"
+else
+  CONFIG_FILE="${DEFAULT_CONFIG_FILE}"
+fi
+
+if [ -e ${CONFIG_FILE} ]
+then
+  source ${CONFIG_FILE}
+#else
+#  echo
+#  echo -e "${LTRED}ERROR: No config file found"
+#  echo
+fi
+
+##############################################################################
+#     Functions
+##############################################################################
+
+run () {
+  echo -e "${LTGREEN}COMMAND: ${GRAY}$*${NC}"
+  "$@"
+}
+
+usage() {
+  echo
+  echo -e "USAGE: ${0} create | delete | reset | list [<config_file>]"
+  echo
+}
+
+check_for_vbmc_command() {
+  if ! which vbmc > /dev/null
+  then
+    echo
+    echo -e "${LTRED}ERROR: The vbmc command does not seem to be available.${NC}"
+    echo
+    exit
+  fi
+}
+
+test_config_file_variables() {
+  if [ -z "${VIRTUAL_BMC_NETWORK}" ]
+  then
+    echo -e "${LTRED}ERROR: No BMC network defined.${NC}"
+    local NO_CONFIG=Y
+  fi
+
+  if [ -z "${VIRTUAL_BMC_LIST}" ]
+  then
+    echo -e "${LTRED}ERROR: No BMC devices defined.${NC}"
+    local NO_CONFIG=Y
+  fi
+
+  case ${NO_CONFIG} in
+    Y)
+      echo
+      echo -e "${LTRED}Config file parameters are missing. Exiting.${NC}"
+      echo
+      exit
+    ;;
+  esac
+}
+
+virtualbmc_control() {
+  local USAGE_STRING="USAGE: ${0} <action> <vm_name> <bmc_addr> <bnc_port> <bmc_network_name> <bmc_username> <bmc_password>"
+
+  if [ -z ${1} ]
+  then
+    echo
+    echo "ERROR: You must provide the action: create | delete | reset | list"
+    echo
+    echo ${USAGE_STRING}
+    echo
+    return 1
+  elif [ -z ${2} ]
+  then
+    echo
+    echo "ERROR: You must provide the name of the VM"
+    echo
+    echo ${USAGE_STRING}
+    echo
+    return 1
+  elif [ -z ${3} ]
+  then
+    echo
+    echo "ERROR: You must provide the address of the BMC"
+    echo
+    echo ${USAGE_STRING}
+    echo
+    return 1
+  elif [ -z ${4} ]
+  then
+    echo
+    echo "ERROR: You must provide the port of the BMC"
+    echo
+    echo ${USAGE_STRING}
+    echo
+    return 1
+  elif [ -z ${5} ]
+  then
+    echo
+    echo "ERROR: You must provide the name of the BMC network"
+    echo
+    echo ${USAGE_STRING}
+    echo
+    return 1
+  elif [ -z ${6} ]
+  then
+    echo
+    echo "ERROR: You must provide the username for the BMC"
+    echo
+    echo ${USAGE_STRING}
+    echo
+    return 1
+  elif [ -z ${7} ]
+  then
+    echo
+    echo "ERROR: You must provide the password for the BMC"
+    echo
+    echo ${USAGE_STRING}
+    echo
+    return 1
+  fi
+
+  local ACTION=${1}
+  local VM_NAME=${2}
+  local BMC_ADDR=${3}
+  local BMC_PORT=${4}
+  local BMC_NETWORK_NAME=${5}
+  local BMC_USERNAME=${6}
+  local BMC_PASSWORD=${7}
+  local BMC_NETWORK_CIDR=$(ip addr show dev ${BMC_NETWORK_NAME} | grep " .inet " | awk '{ print $2 }' | cut -d "/" -f 2)
+
+  #echo
+  #echo "########################################################"
+  #echo ACTION=${ACTION}
+  #echo VM_NAME=${VM_NAME}
+  #echo BMC_ADDR=${BMC_ADDR}
+  #echo BMC_PORT=${BMC_PORT}
+  #echo BMC_NETWORK_NAME=${BMC_NETWORK_NAME}
+  #echo BMC_USERNAME=${BMC_USERNAME}
+  #echo BMC_PASSWORD=${BMC_PASSWORD}
+  #echo BMC_NETWORK_CIDR=${BMC_NETWORK_CIDR}
+  #echo "########################################################"
+  #echo;read
+
+  if echo ${VM_NAME} | grep -q "-"
+  then
+    local VM_SHORT_NAME=$(echo ${VM_NAME} | cut -d "-" -f 2)
+  else
+    local VM_SHORT_NAME=${VM_NAME}
+  fi
+
+  local VM_SHORT_NAME_LEN=$(echo ${VM_SHORT_NAME} | wc -m)
+  ((VM_SHORT_NAME_LEN--))
+
+  if [ "${VM_SHORT_NAME_LEN}" -le 7 ]
+  then
+    local PREF=${VM_SHORT_NAME}
+  else
+    local NUM=$(echo ${VM_SHORT_NAME} | grep -o [0-9]*$)
+    if [ -z ${NUM} ]
+    then
+      local PREF=$(echo ${VM_SHORT_NAME} | cut -c 1,2,3,4,5,6,7)
+    else
+      local PREF=$(echo ${VM_SHORT_NAME} | cut -c 1,2,3,4)
+    fi
+  fi
+
+  local VETH_NAME_A=${PREF}${NUM}-bmc-nic
+  local VETH_NAME_B=${PREF}${NUM}-bmc
+
+  #echo "--------------------------------------"
+  #echo VM_SHORT_NAME=${VM_SHORT_NAME}
+  #echo VM_SHORT_NAME_LEN=${VM_SHORT_NAME_LEN}
+  #echo
+  #echo NUM=${NUM}
+  #echo PREF=${PREF}
+  #echo
+  #echo VETH_NAME_A=${VETH_NAME_A}
+  #echo VETH_NAME_B=${VETH_NAME_B}
+  #echo "--------------------------------------"
+  #echo
+
+  case ${ACTION}
+  in
+    create)
+      if ! ip addr show | grep -q ${VETH_NAME_B}
+      then
+        echo
+        # Create the veth pair for the BMC
+        #echo sudo ip link add dev ${VETH_NAME_A} type veth peer name ${VETH_NAME_B}
+        run sudo ip link add dev ${VETH_NAME_A} type veth peer name ${VETH_NAME_B}
+    
+        #echo sudo ip link set dev ${VETH_NAME_A} up
+        run sudo ip link set dev ${VETH_NAME_A} up
+    
+        #echo sudo ip link set ${VETH_NAME_A} master ${BMC_NETWORK_NAME}
+        run sudo ip link set ${VETH_NAME_A} master ${BMC_NETWORK_NAME}
+    
+        #echo sudo ip addr add ${BMC_ADDR} dev ${VETH_NAME_B}
+        run sudo ip addr add ${BMC_ADDR}/${BMC_NETWORK_CIDR} dev ${VETH_NAME_B}
+    
+        #echo sudo ip link set ${VETH_NAME_B} up
+        run sudo ip link set ${VETH_NAME_B} up
+ 
+      fi
+      if ! sudo vbmc list | grep -q ${VM_NAME}
+      then
+        echo
+        # Create and start the BMC
+        run sudo vbmc add ${VM_NAME} --address ${BMC_ADDR} --port ${BMC_PORT} --username ${BMC_USERNAME} --password ${BMC_PASSWORD}
+        run sudo vbmc start ${VM_NAME}
+        run sudo vbmc show ${VM_NAME}
+
+        echo
+      fi
+    ;;
+    delete)
+      echo
+      # Stop and remove the BMC
+      run sudo vbmc stop ${VM_NAME}
+      run sudo vbmc delete ${VM_NAME}
+
+      # Remove the veth pair for the BMC
+      #echo sudo ip link set ${VETH_NAME_B} down
+      run sudo ip link set ${VETH_NAME_B} down
+  
+      #echo sudo ip addr del ${BMC_ADDR} dev ${VETH_NAME_B}
+      run sudo ip addr del ${BMC_ADDR}/${BMC_NETWORK_CIDR} dev ${VETH_NAME_B}
+  
+      #echo sudo ip link set dev ${VETH_NAME_A} down
+      run sudo ip link set dev ${VETH_NAME_A} down
+  
+      #echo sudo ip link del dev ${VETH_NAME_A} type veth
+      run sudo ip link del dev ${VETH_NAME_A} type veth
+      
+      echo
+    ;;
+    test)
+      echo
+      sudo vbmc list | grep -q "${VM_NAME}"
+      return $?
+    ;;
+  esac
+}
+
+create_virtual_bmc_devices() {
+  echo
+  echo -e "${LTBLUE}Creating virtual BMC devices ...${NC}"
+  echo -e "${LTBLUE}=====================================================================${NC}"
+  echo
+
+  for BMC in ${VIRTUAL_BMC_LIST}
+  do
+    local VM_NAME=$(echo ${BMC} | cut -d , -f 1)
+    local BMC_ADDR=$(echo ${BMC} | cut -d , -f 2)
+
+    if [ -z ${BMC_ADDR} ]
+    then
+      BMC_ADDR=${DEFAULT_BMC_ADDR}
+    fi
+
+    local BMC_PORT=$(echo ${BMC} | cut -d , -f 3)
+    if [ -z ${BMC_PORT} ]
+    then
+      BMC_PORT=${DEFAULT_BMC_PORT}
+    fi
+
+    local BMC_USERNAME=$(echo ${BMC} | cut -d , -f 4)
+    if [ -z ${BMC_USERNAME} ]
+    then
+      BMC_USERNAME=${DEFAULT_BMC_USERNAME}
+    fi
+
+    local BMC_PASSWORD=$(echo ${BMC} | cut -d , -f 5)
+    if [ -z ${BMC_PASSWORD} ]
+    then
+      BMC_PASSWORD=${DEFAULT_BMC_PASSWORD}
+    fi
+
+    echo -e "${LTCYAN}VM Name: ${GRAY}${VM_NAME}${NC}"
+
+    run virtualbmc_control create ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD}
+    echo -e "${LTBLUE}=====================================================================${NC}"
+    echo
+  done
+}
+
+delete_virtual_bmc_devices() {
+  echo
+  echo -e "${LTBLUE}Deleting virtual BMC devices ...${NC}"
+  echo -e "${LTBLUE}=====================================================================${NC}"
+  echo
+
+  for BMC in ${VIRTUAL_BMC_LIST}
+  do
+    local VM_NAME=$(echo ${BMC} | cut -d , -f 1)
+    local BMC_ADDR=$(echo ${BMC} | cut -d , -f 2)
+
+    if [ -z ${BMC_ADDR} ]
+    then
+      BMC_ADDR=${DEFAULT_BMC_ADDR}
+    fi
+
+    local BMC_PORT=$(echo ${BMC} | cut -d , -f 3)
+    if [ -z ${BMC_PORT} ]
+    then
+      BMC_PORT=${DEFAULT_BMC_PORT}
+    fi
+
+    local BMC_USERNAME=$(echo ${BMC} | cut -d , -f 4)
+    if [ -z ${BMC_USERNAME} ]
+    then
+      BMC_USERNAME=${DEFAULT_BMC_USERNAME}
+    fi
+
+    local BMC_PASSWORD=$(echo ${BMC} | cut -d , -f 5)
+    if [ -z ${BMC_PASSWORD} ]
+    then
+      BMC_PASSWORD=${DEFAULT_BMC_PASSWORD}
+    fi
+
+    echo -e "${LTCYAN}VM Name: ${GRAY}${VM_NAME}${NC}"
+
+    run virtualbmc_control delete ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD}
+    echo -e "${LTBLUE}=====================================================================${NC}"
+    echo
+  done
+}
+
+reset_virtual_bmc_devices() {
+  echo
+  echo -e "${LTBLUE}Resetting virtual BMC devices ...${NC}"
+  echo -e "${LTBLUE}=====================================================================${NC}"
+  echo
+
+  for BMC in ${VIRTUAL_BMC_LIST}
+  do
+    local VM_NAME=$(echo ${BMC} | cut -d , -f 1)
+    local BMC_ADDR=$(echo ${BMC} | cut -d , -f 2)
+
+    if [ -z ${BMC_ADDR} ]
+    then
+      BMC_ADDR=${DEFAULT_BMC_ADDR}
+    fi
+
+    local BMC_PORT=$(echo ${BMC} | cut -d , -f 3)
+    if [ -z ${BMC_PORT} ]
+    then
+      BMC_PORT=${DEFAULT_BMC_PORT}
+    fi
+
+    local BMC_USERNAME=$(echo ${BMC} | cut -d , -f 4)
+    if [ -z ${BMC_USERNAME} ]
+    then
+      BMC_USERNAME=${DEFAULT_BMC_USERNAME}
+    fi
+
+    local BMC_PASSWORD=$(echo ${BMC} | cut -d , -f 5)
+    if [ -z ${BMC_PASSWORD} ]
+    then
+      BMC_PASSWORD=${DEFAULT_BMC_PASSWORD}
+    fi
+
+    echo -e "${LTBLUE}Deleting virtual BMC device ...${NC}"
+    echo -e "${LTBLUE}---------------------------------------------------------${NC}"
+    echo -e "${LTCYAN}VM Name: ${GRAY}${VM_NAME}${NC}"
+    run virtualbmc_control delete ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD}
+
+    echo -e "${LTBLUE}Creating virtual BMC device ...${NC}"
+    echo -e "${LTBLUE}---------------------------------------------------------${NC}"
+    echo -e "${LTCYAN}VM Name: ${GRAY}${VM_NAME}${NC}"
+    run virtualbmc_control create ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD}
+    echo
+  done
+
+  echo -e "${LTBLUE}=====================================================================${NC}"
+}
+
+list_virtual_bmc_devices() {
+  echo
+  echo -e "${LTBLUE}Defined virtual BMC devices:${NC}"
+  echo -e "${LTBLUE}=====================================================================${NC}"
+  echo
+
+  for BMC in ${VIRTUAL_BMC_LIST}
+  do
+    local VM_NAME=$(echo ${BMC} | cut -d , -f 1)
+    local BMC_ADDR=$(echo ${BMC} | cut -d , -f 2)
+
+    if [ -z ${BMC_ADDR} ]
+    then
+      BMC_ADDR=${DEFAULT_BMC_ADDR}
+    fi
+
+    local BMC_PORT=$(echo ${BMC} | cut -d , -f 3)
+    if [ -z ${BMC_PORT} ]
+    then
+      BMC_PORT=${DEFAULT_BMC_PORT}
+    fi
+
+    local BMC_USERNAME=$(echo ${BMC} | cut -d , -f 4)
+    if [ -z ${BMC_USERNAME} ]
+    then
+      BMC_USERNAME=${DEFAULT_BMC_USERNAME}
+    fi
+
+    local BMC_PASSWORD=$(echo ${BMC} | cut -d , -f 5)
+    if [ -z ${BMC_PASSWORD} ]
+    then
+      BMC_PASSWORD=${DEFAULT_BMC_PASSWORD}
+    fi
+
+    echo -e "${LTBLUE}BMC device VM Name:     ${LTPURPLE}${VM_NAME}${NC}"
+    echo -e "${LTBLUE}BMC device IP Address:  ${LTPURPLE}${BMC_ADDR}${NC}"
+    echo -e "${LTBLUE}BMC device Port:        ${LTPURPLE}${BMC_PORT}${NC}"
+    echo -e "${LTBLUE}BMC device User Name:   ${LTPURPLE}${BMC_USERNAME}${NC}"
+    echo -e "${LTBLUE}BMC device Password:    ${LTPURPLE}${BMC_PASSWORD}${NC}"
+    echo -e "${LTBLUE}---------------------------------------------------------${NC}"
+  done
+
+    echo
+    echo -e "${LTBLUE}=====================================================================${NC}"
+    echo
+}
+
+main() {
+  check_for_vbmc_command
+
+  if [ -z ${1} ]
+  then
+    echo
+    usage
+    exit
+  fi
+
+  test_config_file_variables
+
+  case ${1} in
+    create)
+      create_virtual_bmc_devices
+    ;;
+    delete)
+      delete_virtual_bmc_devices
+    ;;
+    reset)
+      reset_virtual_bmc_devices
+    ;;
+    list)
+      list_virtual_bmc_devices
+    ;;
+  esac
+}
+
+######################################################################################################
+
+main $*
+
