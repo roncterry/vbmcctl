@@ -10,6 +10,14 @@ The **virtualbmc** (**vbmc**) command must be installed for this command to func
 ```
 vbmcctl create|delete|reset|list [config_file]
 ```
+A list of options and their descriptions:
+
+Option | Description
+------------ | -------------
+**create** |		create the virtusl BMC devices defined in the config file
+**delete** |		delete the virtual BMC devices defined in the config file
+**reset** |	reset (delete and then create) the virtual BMC devices defined in the config file
+**list** |		list the virtual BMC devices defined in the config file
 
 ## Config File
 The default config file is: **/etc/vbmcctl.cfg**
