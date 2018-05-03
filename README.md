@@ -14,7 +14,9 @@ vbmcctl create|delete|reset|list [config_file]
 ## Config File
 The default config file is: **/etc/vbmcctl.cfg**
 
-If this file does not exist and a config file is not supplied on the command line the command will exit.
+If this file does not exist and a config file is not supplied on the command line the command will exit with an error.
+
+If the variables in the config file are empty the command will exit with an error.
 
 ## Config File Syntax
 
