@@ -1,5 +1,10 @@
 # vbmcctl
-Wrapper for the virtualbmc (vbmc) command that allows for predefined BMC device configuration
+Wrapper for the virtualbmc (vbmc) command that allows for predefined BMC device configuration.
+
+The **virtualbmc** (**vbmc**) command must be installed for this command to function. The **virtualbmc** package is commonly named:: ***python-virtualbmc*** 
+
+(In openSUSE, this package can be found in the **Cloud:OpenStack:Master** repository)
+
 
 ## Usage: 
 ```
@@ -34,12 +39,12 @@ The BMC entries in VIRTUAL_BMC_LIST should be a space delimited list of comma de
 
 ***Example 1:***
  
-	 VIRTUAL_BMC_LIST="controller01,192.168.124.1,623,admin,linux compute01,192.168.124.1,6231,admin,linux"
+	 VIRTUAL_BMC_LIST="controller01,192.168.124.201,623,admin,linux compute01,192.168.124.202,623,admin,linux"
 
 If you want to use the default value for a field just leave that field empty.
 
 ***Example 2*** (using default username and password):
 
-	 VIRTUAL_BMC_LIST="controller01,192.168.124.1,623,, compute01,192.168.124.1,6231,,"
+	 VIRTUAL_BMC_LIST="controller01,192.168.124.201,623,, compute01,192.168.124.202,623,,"
 
 The VM names should only be VMs that are currenlty defined in Libvirt and cani be seen using the '**virsh list --all**' command.
