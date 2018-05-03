@@ -17,6 +17,10 @@ If this file does not exist and a config file is not supplied on the command lin
 
 This should be the name of one of your virtual networks/bridges. If it is a Libvirt network then it must match the name of the bridge created by the Libvirt network.
 
+***Example:***
+
+	VIRTUAL_BMC_NETWORK="virbr0"
+	
 
 **VIRTUAL_BMC_LIST**
 
