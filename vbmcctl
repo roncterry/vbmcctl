@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# version: 1.0.0
+# version: 1.0.1
 # date: 2018-05-03
 
 ### Colors ###
@@ -447,11 +447,24 @@ list_virtual_bmc_devices() {
       BMC_PASSWORD=${DEFAULT_BMC_PASSWORD}
     fi
 
+    local VBMC_STATUS=$(sudo vbmc list | grep ${VM_NAME} | awk '{ print $4 }')
+
     echo -e "${LTBLUE}BMC device VM Name:     ${LTPURPLE}${VM_NAME}${NC}"
     echo -e "${LTBLUE}BMC device IP Address:  ${LTPURPLE}${BMC_ADDR}${NC}"
     echo -e "${LTBLUE}BMC device Port:        ${LTPURPLE}${BMC_PORT}${NC}"
     echo -e "${LTBLUE}BMC device User Name:   ${LTPURPLE}${BMC_USERNAME}${NC}"
     echo -e "${LTBLUE}BMC device Password:    ${LTPURPLE}${BMC_PASSWORD}${NC}"
+    case ${VBMC_STATUS} in
+      running)
+        echo -e "${LTBLUE}BMC device Status:      ${LTGREEN}${VBMC_STATUS}${NC}"
+      ;;
+      down)
+        echo -e "${LTBLUE}BMC device Status:      ${LTRED}${VBMC_STATUS}${NC}"
+      ;;
+      *)
+        echo -e "${LTBLUE}BMC device Status:      ${ORANGE}missing${NC}"
+      ;;
+    esac
     echo -e "${LTBLUE}---------------------------------------------------------${NC}"
   done
 
