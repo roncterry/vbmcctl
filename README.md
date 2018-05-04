@@ -74,7 +74,7 @@ Any machine that can access the VIRTUAL_BMC_NETWORK can use the **ipmitool** com
 
 A virtual BMC device is then created and associeated with the BMC IP address and the device is started.
 
-###Example *ipmitool* commands:
+### Example *ipmitool* commands:
 ```
 # Power virtual machine on, off, graceful off, NMI and reset
 ipmitool -I lanplus -U <BMC_USERNAME> -P <BMC_PASSWORD>  -H <BMC_IP> power on|off|soft|diag|reset
@@ -94,7 +94,7 @@ ipmitool -I lanplus -U <BMC_USERNAME> -P <BMC_PASSWORD> -H <BMC_IP> chassis boot
 
 The individual BMC devices can be managed using the **vbmc** command. It is important to note that the virtual BMC devices are created as the root user (using sudo) so you must also use the **vbmc** command as root to manage the devices (***sudo vbmc*** ...).
 
-###Example vbmc commands:
+### Example vbmc commands:
 ```
 # List the BMC devices
 sudo vbmc list
