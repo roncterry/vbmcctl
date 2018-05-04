@@ -94,7 +94,7 @@ ipmitool -I lanplus -U <BMC_USERNAME> -P <BMC_PASSWORD> -H <BMC_IP> chassis boot
 
 The individual BMC devices can be managed using the **vbmc** command. It is important to note that the virtual BMC devices are created as the root user (using sudo) so you must also use the **vbmc** command as root to manage the devices (***sudo vbmc*** ...).
 
-### Example vbmc commands:
+### Example *vbmc* commands:
 ```
 # List the BMC devices
 sudo vbmc list
