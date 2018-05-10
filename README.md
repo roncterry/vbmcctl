@@ -8,7 +8,7 @@ The **virtualbmc** (**vbmc**) command must be installed for this command to func
 
 ## Usage
 ```
-vbmcctl create|delete|reset|list [config_file]
+vbmcctl create|delete|reset|start|stop|list [config_file]
 ```
 The **vbmcctl** command can (should?) be run as a regular user as it uses **sudo** to create the virtual BMC devices.
 
@@ -19,7 +19,9 @@ Option | Description
 **create** |		create the virtusl BMC devices defined in the config file
 **delete** |		delete the virtual BMC devices defined in the config file
 **reset** |	reset (delete and then create) the virtual BMC devices defined in the config file
-**list** |		list the virtual BMC devices defined in the config file
+**start** |	start the virtual BMC devices defined in the config file
+**stop** |	stop the virtual BMC devices defined in the config file
+**list** |		list the virtual BMC devices defined in the config file along with their status
 
 ## Config File
 The default config file is: **/etc/vbmcctl.cfg**

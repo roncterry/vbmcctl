@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# version: 1.0.1
+# version: 1.1.0
 # date: 2018-05-03
 
 ### Colors ###
@@ -59,7 +59,7 @@ run () {
 
 usage() {
   echo
-  echo -e "USAGE: ${0} create | delete | reset | list [<config_file>]"
+  echo -e "USAGE: ${0} create|delete|reset|start|stop|list [<config_file>]"
   echo
 }
 
@@ -272,6 +272,35 @@ virtualbmc_control() {
       
       echo
     ;;
+    start)
+      if ! ip addr show | grep -q ${VETH_NAME_B}
+      then
+        echo
+        echo -e "${ORANGE}WARNING: The veth for this BMC device does not seem to exist. Skipping ...${NC}"
+        echo -e "${ORANGE}         (If you wish to recreate it use the create or reset option instead)${NC}"
+        echo
+      fi
+      if sudo vbmc list | grep -q ${VM_NAME}
+      then
+        echo
+        # Start the BMC
+        run sudo vbmc start ${VM_NAME}
+        run sudo vbmc show ${VM_NAME}
+
+        echo
+      fi
+    ;;
+    stop)
+      if sudo vbmc list | grep -q ${VM_NAME}
+      then
+        echo
+        # Stop the BMC
+        run sudo vbmc stop ${VM_NAME}
+        run sudo vbmc show ${VM_NAME}
+
+        echo
+      fi
+    ;;
     test)
       echo
       sudo vbmc list | grep -q "${VM_NAME}"
@@ -359,6 +388,90 @@ delete_virtual_bmc_devices() {
     echo -e "${LTCYAN}VM Name: ${GRAY}${VM_NAME}${NC}"
 
     run virtualbmc_control delete ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD}
+    echo -e "${LTBLUE}=====================================================================${NC}"
+    echo
+  done
+}
+
+start_virtual_bmc_devices() {
+  echo
+  echo -e "${LTBLUE}Starting virtual BMC devices ...${NC}"
+  echo -e "${LTBLUE}=====================================================================${NC}"
+  echo
+
+  for BMC in ${VIRTUAL_BMC_LIST}
+  do
+    local VM_NAME=$(echo ${BMC} | cut -d , -f 1)
+    local BMC_ADDR=$(echo ${BMC} | cut -d , -f 2)
+
+    if [ -z ${BMC_ADDR} ]
+    then
+      BMC_ADDR=${DEFAULT_BMC_ADDR}
+    fi
+
+    local BMC_PORT=$(echo ${BMC} | cut -d , -f 3)
+    if [ -z ${BMC_PORT} ]
+    then
+      BMC_PORT=${DEFAULT_BMC_PORT}
+    fi
+
+    local BMC_USERNAME=$(echo ${BMC} | cut -d , -f 4)
+    if [ -z ${BMC_USERNAME} ]
+    then
+      BMC_USERNAME=${DEFAULT_BMC_USERNAME}
+    fi
+
+    local BMC_PASSWORD=$(echo ${BMC} | cut -d , -f 5)
+    if [ -z ${BMC_PASSWORD} ]
+    then
+      BMC_PASSWORD=${DEFAULT_BMC_PASSWORD}
+    fi
+
+    echo -e "${LTCYAN}VM Name: ${GRAY}${VM_NAME}${NC}"
+
+    run virtualbmc_control start ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD}
+    echo -e "${LTBLUE}=====================================================================${NC}"
+    echo
+  done
+}
+
+stop_virtual_bmc_devices() {
+  echo
+  echo -e "${LTBLUE}Stopping virtual BMC devices ...${NC}"
+  echo -e "${LTBLUE}=====================================================================${NC}"
+  echo
+
+  for BMC in ${VIRTUAL_BMC_LIST}
+  do
+    local VM_NAME=$(echo ${BMC} | cut -d , -f 1)
+    local BMC_ADDR=$(echo ${BMC} | cut -d , -f 2)
+
+    if [ -z ${BMC_ADDR} ]
+    then
+      BMC_ADDR=${DEFAULT_BMC_ADDR}
+    fi
+
+    local BMC_PORT=$(echo ${BMC} | cut -d , -f 3)
+    if [ -z ${BMC_PORT} ]
+    then
+      BMC_PORT=${DEFAULT_BMC_PORT}
+    fi
+
+    local BMC_USERNAME=$(echo ${BMC} | cut -d , -f 4)
+    if [ -z ${BMC_USERNAME} ]
+    then
+      BMC_USERNAME=${DEFAULT_BMC_USERNAME}
+    fi
+
+    local BMC_PASSWORD=$(echo ${BMC} | cut -d , -f 5)
+    if [ -z ${BMC_PASSWORD} ]
+    then
+      BMC_PASSWORD=${DEFAULT_BMC_PASSWORD}
+    fi
+
+    echo -e "${LTCYAN}VM Name: ${GRAY}${VM_NAME}${NC}"
+
+    run virtualbmc_control stop ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD}
     echo -e "${LTBLUE}=====================================================================${NC}"
     echo
   done
@@ -494,6 +607,12 @@ main() {
     ;;
     reset)
       reset_virtual_bmc_devices
+    ;;
+    start)
+      start_virtual_bmc_devices
+    ;;
+    stop)
+      stop_virtual_bmc_devices
     ;;
     list)
       list_virtual_bmc_devices
