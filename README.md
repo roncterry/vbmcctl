@@ -47,19 +47,19 @@ The BMC entries in VIRTUAL_BMC_LIST should be a space delimited list of comma de
 
 Value | Description
 ------------ | -------------
- **VM Name**|  (name of the VM in Libvirt)
- **Host BMC IP**|  (IP address on the host the BMC listens on: Default=127.0.0.1)
- **BMC Port **| (port the BMC will listed on: Default=623)
-** BMC Username**|  (username to log in to the BMC as: Default=admin)
-** BMC Password**|  (password for the BMC user: Default=password)
+VM Name |  (name of the VM in Libvirt)
+Host BMC IP |  (IP address on the host the BMC listens on: Default=127.0.0.1)
+BMC Port | (port the BMC will listed on: Default=623)
+ BMC Username |  (username to log in to the BMC as: Default=admin)
+ BMC Password |  (password for the BMC user: Default=password)
 
-***Example 1:***
+***Example 1:*** (with 2 BMC devices)
  
 	 VIRTUAL_BMC_LIST="controller01,192.168.124.201,623,admin,linux compute01,192.168.124.202,623,admin,linux"
 
 If you want to use the default value for a field just leave that field empty.
 
-***Example 2*** (using default username and password):
+***Example 2*** (wwith 2 BMC devices using default username and password):
 
 	 VIRTUAL_BMC_LIST="controller01,192.168.124.201,623,, compute01,192.168.124.202,623,,"
 
