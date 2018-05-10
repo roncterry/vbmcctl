@@ -59,7 +59,7 @@ BMC Port | (port the BMC will listed on: Default=623)
 
 If you want to use the default value for a field just leave that field empty.
 
-***Example 2*** (wwith 2 BMC devices using default username and password):
+***Example 2*** (with 2 BMC devices using default username and password):
 
 	 VIRTUAL_BMC_LIST="controller01,192.168.124.201,623,, compute01,192.168.124.202,623,,"
 
