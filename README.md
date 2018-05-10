@@ -45,11 +45,13 @@ This should be the name of one of your virtual networks/bridges. If it is a Libv
 
 The BMC entries in VIRTUAL_BMC_LIST should be a space delimited list of comma delimited values in this order: 
 
- **VM Name**  (name of the VM in Libvirt)
- **Host BMC IP**  (IP address on the host the BMC listens on: Default=127.0.0.1)
- **BMC Port ** (port the BMC will listed on: Default=623)
-** BMC Username**  (username to log in to the BMC as: Default=admin)
-** BMC Password**  (password for the BMC user: Default=password)
+Value | Description
+------------ | -------------
+ **VM Name**|  (name of the VM in Libvirt)
+ **Host BMC IP**|  (IP address on the host the BMC listens on: Default=127.0.0.1)
+ **BMC Port **| (port the BMC will listed on: Default=623)
+** BMC Username**|  (username to log in to the BMC as: Default=admin)
+** BMC Password**|  (password for the BMC user: Default=password)
 
 ***Example 1:***
  
