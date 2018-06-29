@@ -1,7 +1,7 @@
 # vbmcctl
 Wrapper for the **virtualbmc** (**vbmc**) command that allows for predefined BMC device configuration.
 
-The **virtualbmc** (**vbmc**) command must be installed for this command to function. The **virtualbmc** package is commonly named: ***python-virtualbmc*** 
+The **virtualbmc** (**vbmc**) command must be installed for this command to function. The **virtualbmc** package is commonly named: ***python-virtualbmc*** or **python3-virtualbmc**
 
 (In openSUSE, this package can be found in the **Cloud:OpenStack:Master** repository)
 
