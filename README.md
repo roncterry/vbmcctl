@@ -8,25 +8,38 @@ The **virtualbmc** (**vbmc**) command must be installed for this command to func
 
 ## Usage
 ```
-vbmcctl create|delete|reset|start|stop|list [config_file]
+vbmcctl create|delete|reset|list|start|stop|restart|status [config=<config_file>] [<vm_name> [<vm_name> ...]] [nocolor]
 ```
-The **vbmcctl** command can (should?) be run as a regular user as it uses **sudo** to create the virtual BMC devices.
+The **vbmcctl** command should be run as a regular user as it uses **sudo** to create the virtual BMC devices. 
+
+An alternate config file can be specifice on the CLI with the **config=** option. If an alternate config file is specifice then the default config file is ignored.
+
+One or more VMs that are listed in the configuration file can be specified on the CLI. If this is the case the the action is only performed on this list of VMs rather then all VMs listed in the config file.
 
 A list of options and their descriptions:
 
+Action | Description
+------------ | -------------
+**create** |		create the virtusl BMC devices defined in the config file or specified on the CLI
+**delete** |		delete the virtual BMC devices defined in the config file or specified on the CLI
+**reset** |	reset (delete and then create) the virtual BMC devices defined in the config file or specified on the CLI
+**list** |		list the virtual BMC devices defined in the config file or specified on the CLI along with their status
+**start** |	start the virtual BMC devices defined in the config file or specified on the CLI
+**stop** |	stop the virtual BMC devices defined in the config file or specified on the CLI
+**restart** |	stops and then starts the virtual BMC devices defined in the config file or specified on the CLI
+**status** |		displays the status of the virtual BMC devices defined in the config file status or specified on the CLI
+
+--
+
 Option | Description
 ------------ | -------------
-**create** |		create the virtusl BMC devices defined in the config file
-**delete** |		delete the virtual BMC devices defined in the config file
-**reset** |	reset (delete and then create) the virtual BMC devices defined in the config file
-**start** |	start the virtual BMC devices defined in the config file
-**stop** |	stop the virtual BMC devices defined in the config file
-**list** |		list the virtual BMC devices defined in the config file along with their status
+**nocolor** |		turns off colorization of the output
+
 
 ## Config File
 The default config file is: **/etc/vbmcctl.cfg**
 
-If this file does not exist, and a config file is not supplied on the command line, the command will exit with an error.
+If this file does not exist, and a config file is not supplied on the command line using the **config=** option, the command will exit with an error.
 
 If the variables in the config file are empty the command will exit with an error.
 
@@ -38,8 +51,7 @@ This should be the name of one of your virtual networks/bridges. If it is a Libv
 
 ***Example:***
 
-	VIRTUAL_BMC_NETWORK="virbr0"
-	
+	 VIRTUAL_BMC_NETWORK="virbr0"
 
 **VIRTUAL_BMC_LIST**
 
@@ -54,7 +66,7 @@ BMC Port | (port the BMC will listed on: Default=623)
  BMC Password |  (password for the BMC user: Default=password)
 
 ***Example 1:*** (with 2 BMC devices)
- 
+
 	 VIRTUAL_BMC_LIST="controller01,192.168.124.201,623,admin,linux compute01,192.168.124.202,623,admin,linux"
 
 If you want to use the default value for a field just leave that field empty.
@@ -105,9 +117,11 @@ sudo vbmc list
 
 # Stop a BMC device
 sudo vbmc stop <VM_NAME>
+(same as vbmcctl stop <VM_NAME>)
 
 # Start a BMC device
 sudo vbmc start <VM_NAME>
+(same as vbmcctl start <VM_NAME>
 
 # Display status of a BMC device
 sudo vbmc status <VM_NAME>
@@ -120,7 +134,7 @@ vbmcctl reset
 ```
 (or if you are using a config file other then the default)
 ```
-vbmcctl reset <CONFIG_FILE>
+vbmcctl reset config=<CONFIG_FILE>
 ```
 
 ### Troubleshooting:
@@ -128,4 +142,8 @@ Sometimes a virtual BMC device will just stop running on its own. You can use th
 ```
 sudo vbmc start <VM_NAME>
 ```
-If that doesn't work then just reset all of the BMC devices as described above. Reseting all of the BMC devices is safe to do at any time. If an IPMI command is being issued to the device when it is being reset it will not be received by the device. The command will need to be reissued when the BMC device is up and running again.
+or
+```
+vbmcctl start <VM_NAME>
+```
+If that doesn't work then just **reset** all of the BMC devices as described above. Reseting all of the BMC devices is safe to do at any time. If an IPMI command is being issued to the device when it is being reset it will not be received by the device. The command will need to be reissued when the BMC device is up and running again.
