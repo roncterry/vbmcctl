@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# version: 2.0.0
-# date: 2018-06-29
+# version: 2.0.1
+# date: 2018-07-05
 
 DEFAULT_CONFIG_FILE="/etc/vbmcctl.cfg"
 
@@ -614,11 +614,6 @@ main() {
   get_vm_list ${*}
 
   if [ -z ${1} ]
-  then
-    echo
-    usage
-    exit
-  elif echo ${*} | grep -qEv "(--help,-h)"
   then
     echo
     usage
