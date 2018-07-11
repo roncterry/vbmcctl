@@ -14,16 +14,17 @@ VIRTUAL_BMC_NETWORK=""
 #  BMC Port  (port the BMC will listed on: Default=623)
 #  BMC Username  (username to log in to the BMC as: Default=admin)
 #  BMC Password  (password for the BMC user: Default=password)
+#  BMC Libvirt URI  (URI for the Libvirt server running the VM: Default=qemu:///system)
 #
 # Example 1:
-#  VIRTUAL_BMC_LIST="controller01,192.168.124.201,623,admin,linux compute01,192.168.124.202,623,admin,linux"
+#  VIRTUAL_BMC_LIST="controller01,192.168.124.201,623,admin,linux,qemu:///system compute01,192.168.124.202,623,admin,linux,qemu:///system"
 #
 # If you want to use the default value for a field just leave that field empty.
 #
 # Example 2 (using default username and password):
-#  VIRTUAL_BMC_LIST="controller01,192.168.124.201,623,, compute01,192.168.124.202,623,,"
+#  VIRTUAL_BMC_LIST="controller01,192.168.124.201,623,,, compute01,192.168.124.202,623,,,"
 #
-# The VM names should only be VMs that are currenlty defined in Libvirt and cani
+# The VM names should only be VMs that are currenlty defined in Libvirt and can
 # be seen using the 'virsh list --all' command.
 #
 VIRTUAL_BMC_LIST=""

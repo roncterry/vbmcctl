@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# version: 2.0.1
-# date: 2018-07-05
+# version: 2.1.0
+# date: 2018-07-10
 
 DEFAULT_CONFIG_FILE="/etc/vbmcctl.cfg"
 
@@ -9,6 +9,7 @@ DEFAULT_BMC_ADDR=127.0.0.1
 DEFAULT_BMC_PORT=623
 DEFAULT_BMC_USERNAME=admin
 DEFAULT_BMC_PASSWORD=password
+DEFAULT_BMC_URI="qemu:///system"
 
 
 ##############################################################################
@@ -233,6 +234,11 @@ virtualbmc_control() {
   local BMC_NETWORK_NAME=${5}
   local BMC_USERNAME=${6}
   local BMC_PASSWORD=${7}
+  local BMC_URI=${8}
+  if [ -z ${BMC_URI} ]
+  then
+    BMC_URI="qemu:///system"
+  fi
   local BMC_NETWORK_CIDR=$(ip addr show dev ${BMC_NETWORK_NAME} | grep " .inet " | awk '{ print $2 }' | cut -d "/" -f 2)
 
   #echo
@@ -244,6 +250,7 @@ virtualbmc_control() {
   #echo BMC_NETWORK_NAME=${BMC_NETWORK_NAME}
   #echo BMC_USERNAME=${BMC_USERNAME}
   #echo BMC_PASSWORD=${BMC_PASSWORD}
+  #echo BMC_URI=${BMC_URI}
   #echo BMC_NETWORK_CIDR=${BMC_NETWORK_CIDR}
   #echo "########################################################"
   #echo;read
@@ -313,7 +320,7 @@ virtualbmc_control() {
       then
         echo
         # Create and start the BMC
-        run sudo vbmc add ${VM_NAME} --address ${BMC_ADDR} --port ${BMC_PORT} --username ${BMC_USERNAME} --password ${BMC_PASSWORD}
+        run sudo vbmc add ${VM_NAME} --address ${BMC_ADDR} --port ${BMC_PORT} --username ${BMC_USERNAME} --password ${BMC_PASSWORD} --libvirt-uri ${BMC_URI}
         run sudo vbmc start ${VM_NAME}
         run sudo vbmc show ${VM_NAME}
 
@@ -435,6 +442,12 @@ set_virtualbmc_control_args() {
     then
       BMC_PASSWORD=${DEFAULT_BMC_PASSWORD}
     fi
+
+    BMC_URI=$(echo ${BMC} | cut -d , -f 6)
+    if [ -z ${BMC_URI} ]
+    then
+      BMC_URI=${DEFAULT_BMC_URI}
+    fi
 }
 
 unset_virtualbmc_control_args() {
@@ -443,6 +456,7 @@ unset_virtualbmc_control_args() {
     unset BMC_PORT
     unset BMC_USERNAME
     unset BMC_PASSWORD
+    unset BMC_URI
 }
 
 create_virtual_bmc_devices() {
@@ -457,7 +471,7 @@ create_virtual_bmc_devices() {
 
     echo -e "${LTCYAN}VM Name: ${GRAY}${VM_NAME}${NC}"
 
-    run virtualbmc_control create ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD}
+    run virtualbmc_control create ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD} ${BMC_URI}
     unset_virtualbmc_control_args
     echo -e "${LTBLUE}=====================================================================${NC}"
     echo
@@ -476,7 +490,7 @@ delete_virtual_bmc_devices() {
 
     echo -e "${LTCYAN}VM Name: ${GRAY}${VM_NAME}${NC}"
 
-    run virtualbmc_control delete ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD}
+    run virtualbmc_control delete ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD} ${BMC_URI}
     unset_virtualbmc_control_args
     echo -e "${LTBLUE}=====================================================================${NC}"
     echo
@@ -489,7 +503,7 @@ start_virtual_bmc_devices() {
     set_virtualbmc_control_args ${BMC}
     #echo -e "${LTCYAN}VM Name: ${GRAY}${VM_NAME}${NC}"
     #run virtualbmc_control start ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD}
-    virtualbmc_control start ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD}
+    virtualbmc_control start ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD} ${BMC_URI}
     unset_virtualbmc_control_args
     #echo -e "${LTBLUE}=====================================================================${NC}"
     #echo
@@ -502,7 +516,7 @@ restart_virtual_bmc_devices() {
     set_virtualbmc_control_args ${BMC}
     #echo -e "${LTCYAN}VM Name: ${GRAY}${VM_NAME}${NC}"
     #run virtualbmc_control restart ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD}
-    virtualbmc_control restart ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD}
+    virtualbmc_control restart ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD} ${BMC_URI}
     unset_virtualbmc_control_args
     #echo -e "${LTBLUE}=====================================================================${NC}"
     #echo
@@ -515,7 +529,7 @@ stop_virtual_bmc_devices() {
     set_virtualbmc_control_args ${BMC}
     #echo -e "${LTCYAN}VM Name: ${GRAY}${VM_NAME}${NC}"
     #run virtualbmc_control stop ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD}
-    virtualbmc_control stop ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD}
+    virtualbmc_control stop ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD} ${BMC_URI}
     unset_virtualbmc_control_args
     #echo -e "${LTBLUE}=====================================================================${NC}"
     #echo
@@ -535,12 +549,12 @@ reset_virtual_bmc_devices() {
     echo -e "${LTBLUE}Deleting virtual BMC device ...${NC}"
     echo -e "${LTBLUE}---------------------------------------------------------${NC}"
     echo -e "${LTCYAN}VM Name: ${GRAY}${VM_NAME}${NC}"
-    run virtualbmc_control delete ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD}
+    run virtualbmc_control delete ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD} ${BMC_URI}
 
     echo -e "${LTBLUE}Creating virtual BMC device ...${NC}"
     echo -e "${LTBLUE}---------------------------------------------------------${NC}"
     echo -e "${LTCYAN}VM Name: ${GRAY}${VM_NAME}${NC}"
-    run virtualbmc_control create ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD}
+    run virtualbmc_control create ${VM_NAME} ${BMC_ADDR} ${BMC_PORT} ${VIRTUAL_BMC_NETWORK} ${BMC_USERNAME} ${BMC_PASSWORD} ${BMC_URI}
     unset_virtualbmc_control_args
     echo
   done
@@ -565,6 +579,7 @@ list_virtual_bmc_devices() {
     echo -e "${LTBLUE}BMC device Port:        ${LTPURPLE}${BMC_PORT}${NC}"
     echo -e "${LTBLUE}BMC device User Name:   ${LTPURPLE}${BMC_USERNAME}${NC}"
     echo -e "${LTBLUE}BMC device Password:    ${LTPURPLE}${BMC_PASSWORD}${NC}"
+    echo -e "${LTBLUE}BMC device Libvirt URI: ${LTPURPLE}${BMC_URI}${NC}"
     case ${VBMC_STATUS} in
       running)
         echo -e "${LTBLUE}BMC device Status:      ${LTGREEN}${VBMC_STATUS}${NC}"
