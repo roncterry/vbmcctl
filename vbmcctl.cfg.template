@@ -9,15 +9,18 @@ VIRTUAL_BMC_NETWORK=""
 
 # The BMC entries in VIRTUAL_BMC_LIST should be a space delimited list of
 # comma delimited values in this order: 
-#  VM Name  (name of the VM in Libvirt)
-#  Host BMC IP  (IP address on the host the BMC listens on: Default=127.0.0.1)
-#  BMC Port  (port the BMC will listed on: Default=623)
-#  BMC Username  (username to log in to the BMC as: Default=admin)
-#  BMC Password  (password for the BMC user: Default=password)
-#  BMC Libvirt URI  (URI for the Libvirt server running the VM: Default=qemu:///system)
+#  VM Name          -name of the VM in Libvirt
+#  Host BMC IP      -IP address on the host the BMC listens on: Default=127.0.0.1
+#                    This address can contain a CIDR mask or not: i.e. 192.168.100.101/24 or 192.168.100.101
+#  BMC Port         -port the BMC will listed on: Default=623
+#  BMC Username     -username to log in to the BMC as: Default=admin
+#  BMC Password     -password for the BMC user: Default=password
+#  BMC Libvirt URI  -URI for the Libvirt server running the VM: Default=qemu:///system
 #
-# Example 1:
+# Example 1a:
 #  VIRTUAL_BMC_LIST="controller01,192.168.124.201,623,admin,linux,qemu:///system compute01,192.168.124.202,623,admin,linux,qemu:///system"
+# Example 1b:
+#  VIRTUAL_BMC_LIST="controller01,192.168.124.201/24,623,admin,linux,qemu:///system compute01,192.168.124.202/24,623,admin,linux,qemu:///system"
 #
 # If you want to use the default value for a field just leave that field empty.
 #

@@ -59,12 +59,14 @@ The BMC entries in VIRTUAL_BMC_LIST should be a space delimited list of comma de
 
 Value | Description
 ------------ | -------------
-VM Name |  (name of the VM in Libvirt)
-Host BMC IP |  (IP address on the host the BMC listens on: Default=127.0.0.1)
-BMC Port | (port the BMC will listed on: Default=623)
- BMC Username |  (username to log in to the BMC as: Default=admin)
- BMC Password |  (password for the BMC user: Default=password)
-Libvirt URI |  (Libvirt URI of the Libvirt server running the VM: Default: qemu:///system)
+VM Name |  name of the VM in Libvirt
+Host BMC IP |  IP address on the host the BMC listens on: Default=127.0.0.1 
+            |  This addres can contain a CIDR mask or not: i.e. 192.168.100.101/24 or 192.168.100.101
+            |  If no CIDR mask is specified it will first try to determine the CIDR mask of the VIRTUAL_BMC_NETWORK. If it can't determine one it will use the CIDR mask of /24
+BMC Port | port the BMC will listed on: Default=623
+ BMC Username |  username to log in to the BMC as: Default=admin
+ BMC Password |  password for the BMC user: Default=password
+Libvirt URI |  Libvirt URI of the Libvirt server running the VM: Default: qemu:///system
 
 ***Example 1:*** (with 2 BMC devices)
 
