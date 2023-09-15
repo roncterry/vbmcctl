@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# version: 2.2.0
-# date: 2018-12-13
+# version: 2.3.0
+# date: 2023-09-15
 
 DEFAULT_CONFIG_FILE="/etc/vbmcctl.cfg"
 
@@ -83,6 +83,13 @@ check_for_vbmc_command() {
     echo -e "${LTRED}ERROR: The vbmc command does not seem to be available.${NC}"
     echo
     exit
+  fi
+}
+
+run_vbmcd_if_not_running() {
+  if ! ps aux | grep vbmcd | grep -v grep | grep -qo vbmcd
+  then
+    sudo vbmcd
   fi
 }
 
@@ -637,6 +644,7 @@ status_virtual_bmc_devices() {
 main() {
   set_colors ${*}
   check_for_vbmc_command
+  run_vbmcd_if_not_running
   get_config_file ${*}
   get_vm_list ${*}
 
