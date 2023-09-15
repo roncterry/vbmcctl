@@ -3,7 +3,7 @@ Wrapper for the **virtualbmc** (**vbmc**) command that allows for predefined BMC
 
 The **virtualbmc** (**vbmc**) command must be installed for this command to function. The **virtualbmc** package is commonly named: ***python-virtualbmc*** or **python3-virtualbmc**
 
-(In openSUSE, this package can be found in the **isv:SUSEInfra:Tools** or **Cloud:OpenStack:Master** repositories)
+(In openSUSE, this package can be found in the **isv:SUSEInfra:Tools** or **Cloud:OpenStack:Factory** repositories)
 
 
 ## Usage
